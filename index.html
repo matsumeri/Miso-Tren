@@ -22,6 +22,9 @@
   <div class="ambient ambient--two" aria-hidden="true"></div>
 
   <header class="hero wrap">
+    <figure class="hero-logo">
+      <img src="assets/chicasencaramelo.png" alt="Logo Chicasencaramelo" onerror="this.onerror=null;this.src='assets/icon-512.png';">
+    </figure>
     <p class="tag">PWA Instalable</p>
     <h1>Miso Tren</h1>
     <p class="subtitle">Planifica tu viaje por el Metro de Santiago, con rutas optimas, combinaciones y sugerencias horarias.</p>
@@ -106,18 +109,6 @@
       </div>
     </section>
 
-    <section class="panel panel--map" aria-labelledby="mapTitle">
-      <h2 id="mapTitle">Plano del Metro</h2>
-      <p>Consulta el plano oficial para validar estaciones, ramales y combinaciones visuales.</p>
-      <a class="btn btn-ghost" href="https://upload.wikimedia.org/wikipedia/commons/a/a9/Mapa_Metro_de_Santiago.png" target="_blank" rel="noopener noreferrer">Abrir imagen en nueva pestaña</a>
-      <img id="mapPreview" src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Mapa_Metro_de_Santiago.png" alt="Mapa del Metro de Santiago" loading="lazy">
-    </section>
-
-    <section class="panel panel--status" aria-labelledby="statusTitle">
-      <h2 id="statusTitle">Estado de la app</h2>
-      <p id="networkStatus">Revisando estado de red...</p>
-      <p class="small">Funciona sin backend: toda la logica corre en el navegador.</p>
-    </section>
   </main>
 
   <dialog id="mapDialog" class="map-dialog">

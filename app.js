@@ -430,6 +430,10 @@ function wireEvents() {
 }
 
 function updateNetworkStatus() {
+  if (!networkStatus) {
+    return;
+  }
+
   if (navigator.onLine) {
     networkStatus.textContent = "En linea: puedes ver el plano remoto y la app seguira funcionando offline para rutas.";
     return;
