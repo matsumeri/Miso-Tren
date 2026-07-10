@@ -27,6 +27,30 @@ Luego abre:
 http://localhost:4173
 ```
 
+## Versionado semantico
+
+La app usa version semantica sincronizada en `manifest.webmanifest`, `app.js` y `service-worker.js`.
+
+Para subir version automaticamente:
+
+```bash
+bash scripts/bump-version.sh patch
+```
+
+```bash
+bash scripts/bump-version.sh minor
+```
+
+```bash
+bash scripts/bump-version.sh major
+```
+
+Reglas:
+
+- `patch`: correcciones sin cambios incompatibles (x.y.Z)
+- `minor`: nuevas funciones compatibles (x.Y.0)
+- `major`: cambios incompatibles (X.0.0)
+
 ## Publicar para instalar en movil
 
 Para instalar como app en un movil real necesitas URL HTTPS (localhost en PC no aplica al telefono).

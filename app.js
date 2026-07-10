@@ -1,6 +1,7 @@
 const TRANSFER_WALK_MINUTES = 2.8;
 const START_WAIT_FACTOR = 0.35;
 const TRANSFER_WAIT_FACTOR = 0.5;
+const APP_VERSION = "1.1.0";
 
 const LINE_DATA = [
   {
@@ -228,12 +229,14 @@ const networkStatus = document.querySelector("#networkStatus");
 const installBtn = document.querySelector("#installBtn");
 const openMapBtn = document.querySelector("#openMapBtn");
 const mapDialog = document.querySelector("#mapDialog");
+const appVersion = document.querySelector("#appVersion");
 
 let deferredPrompt;
 
 init();
 
 function init() {
+  renderAppVersion();
   buildNetwork();
   populateStations();
   renderLineFilters();
@@ -241,6 +244,14 @@ function init() {
   updateNetworkStatus();
   wireEvents();
   registerServiceWorker();
+}
+
+function renderAppVersion() {
+  if (!appVersion) {
+    return;
+  }
+
+  appVersion.textContent = `· v${APP_VERSION}`;
 }
 
 function normalizeStation(value) {

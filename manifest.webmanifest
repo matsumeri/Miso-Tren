@@ -1,6 +1,7 @@
 {
   "name": "Miso Tren · Metro Santiago",
   "short_name": "MisoTren",
+  "version": "1.1.0",
   "description": "Planificador de viajes en Metro de Santiago con rutas optimas, combinaciones y sugerencias horarias.",
   "start_url": "./",
   "scope": "./",

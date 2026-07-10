@@ -1,4 +1,5 @@
-const CACHE_NAME = "miso-tren-v1";
+const APP_VERSION = "1.1.0";
+const CACHE_NAME = `miso-tren-v${APP_VERSION}`;
 const APP_SHELL = [
   "./",
   "index.html",
