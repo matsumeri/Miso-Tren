@@ -1,4 +1,6 @@
-const TRANSFER_MINUTES = 4.5;
+const TRANSFER_WALK_MINUTES = 2.8;
+const START_WAIT_FACTOR = 0.35;
+const TRANSFER_WAIT_FACTOR = 0.5;
 
 const LINE_DATA = [
   {
@@ -302,8 +304,8 @@ function buildNetwork() {
       for (let j = i + 1; j < nodeIds.length; j += 1) {
         const from = nodeIds[i];
         const to = nodeIds[j];
-        createEdge(from, to, "transfer", TRANSFER_MINUTES);
-        createEdge(to, from, "transfer", TRANSFER_MINUTES);
+        createEdge(from, to, "transfer", TRANSFER_WALK_MINUTES);
+        createEdge(to, from, "transfer", TRANSFER_WALK_MINUTES);
       }
     }
   }
@@ -464,6 +466,7 @@ function onSubmit(event) {
   const destination = resolveStation(destinationInput.value);
   const dayType = dayTypeSelect.value;
   const departureTime = timeInput.value;
+  const departureMinutes = parseTimeToMinutes(departureTime);
   const allowedLines = getAllowedLines();
 
   if (!origin || !destination) {
@@ -485,14 +488,18 @@ function onSubmit(event) {
     fromCanonical: origin.canonical,
     toCanonical: destination.canonical,
     allowedLines,
-    transferPenalty: TRANSFER_MINUTES
+    dayType,
+    departureMinutes,
+    transferBiasMinutes: 0
   });
 
   const lowTransfer = findRoute({
     fromCanonical: origin.canonical,
     toCanonical: destination.canonical,
     allowedLines,
-    transferPenalty: 11
+    dayType,
+    departureMinutes,
+    transferBiasMinutes: 6
   });
 
   if (!best) {
@@ -518,7 +525,14 @@ function onSubmit(event) {
   });
 }
 
-function findRoute({ fromCanonical, toCanonical, allowedLines, transferPenalty }) {
+function findRoute({
+  fromCanonical,
+  toCanonical,
+  allowedLines,
+  dayType,
+  departureMinutes,
+  transferBiasMinutes
+}) {
   const starts = (stationNodeMap.get(fromCanonical) || [])
     .filter((id) => allowedLines.has(nodes.get(id).lineId));
   const ends = new Set(
@@ -535,8 +549,20 @@ function findRoute({ fromCanonical, toCanonical, allowedLines, transferPenalty }
   const queue = [];
 
   starts.forEach((id) => {
-    dist.set(id, 0);
-    queue.push({ id, cost: 0 });
+    const node = nodes.get(id);
+    if (!node) {
+      return;
+    }
+
+    const lineHeadway = getHeadwayMinutes({
+      dayType,
+      minutesOfDay: departureMinutes,
+      lineId: node.lineId
+    });
+    const startCost = lineHeadway * START_WAIT_FACTOR;
+
+    dist.set(id, startCost);
+    queue.push({ id, cost: startCost });
   });
 
   let bestEnd = null;
@@ -572,7 +598,21 @@ function findRoute({ fromCanonical, toCanonical, allowedLines, transferPenalty }
         return;
       }
 
-      const edgeCost = edge.type === "transfer" ? transferPenalty : edge.minutes;
+      let edgeCost = edge.minutes;
+
+      if (edge.type === "transfer") {
+        const transferHeadway = getHeadwayMinutes({
+          dayType,
+          minutesOfDay: departureMinutes,
+          lineId: nextNode.lineId
+        });
+
+        edgeCost =
+          TRANSFER_WALK_MINUTES +
+          transferHeadway * TRANSFER_WAIT_FACTOR +
+          transferBiasMinutes;
+      }
+
       const nextCost = current.cost + edgeCost;
 
       if (nextCost < (dist.get(edge.to) ?? Infinity)) {
@@ -735,6 +775,57 @@ function getCrowdSuggestion(dayType, timeValue) {
   };
 }
 
+function getHeadwayMinutes({ dayType, minutesOfDay, lineId }) {
+  const base = getBaseHeadway(dayType, minutesOfDay);
+
+  // Lineas con trenes mas frecuentes en promedio.
+  if (lineId === "L1" || lineId === "L2") {
+    return Math.max(1.8, base - 0.4);
+  }
+
+  if (lineId === "L4A") {
+    return base + 0.6;
+  }
+
+  return base;
+}
+
+function getBaseHeadway(dayType, minutesOfDay) {
+  if (Number.isNaN(minutesOfDay)) {
+    return 4.2;
+  }
+
+  if (dayType === "weekday") {
+    if (isRange(minutesOfDay, 390, 585) || isRange(minutesOfDay, 1020, 1230)) {
+      return 2.6;
+    }
+
+    if (isRange(minutesOfDay, 585, 690) || isRange(minutesOfDay, 930, 1020)) {
+      return 3.3;
+    }
+
+    if (isRange(minutesOfDay, 1320, 1439) || isRange(minutesOfDay, 0, 360)) {
+      return 5.1;
+    }
+
+    return 4.0;
+  }
+
+  if (dayType === "saturday") {
+    if (isRange(minutesOfDay, 660, 1020)) {
+      return 4.2;
+    }
+
+    return 4.8;
+  }
+
+  if (isRange(minutesOfDay, 720, 1020)) {
+    return 4.9;
+  }
+
+  return 5.4;
+}
+
 function parseTimeToMinutes(value) {
   const [h, m] = value.split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) {
@@ -780,7 +871,7 @@ function renderResult({
 
   statsCards.innerHTML = "";
   createStat("Trayecto", `${origin} -> ${destination}`);
-  createStat("Duracion estimada", `${travelMinutes} min`);
+  createStat("Duracion estimada", `${travelMinutes} min (incluye espera)`);
   createStat("Salida / llegada", `${departureTime} -> ${arrivalTime}`);
   createStat("Combinaciones", `${bestPlan.transferCount}`);
   createStat("Estaciones aprox.", `${bestPlan.stationCount}`);
